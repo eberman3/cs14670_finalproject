@@ -25,27 +25,31 @@ def create_splits(lib, con, neutral, train_test_split=.9):
     corpus = []
     labels = {"Liberal":0, "Conservative":1, "Neutral":2}
     for tree in lib:
-       lib_phrase_data = []
+       phrase_data = []
        for node in tree:
            if hasattr(node, 'label'):
-               lib_phrase_data.append([node.get_words(),labels[node.label]])
+               phrase_data.append([node.get_words(),labels[node.label]])
+       #print(phrase_data)
        #corpus.append({"sentence": tree.get_words(), "label": 0, "phrases":phrase_data })
-
+       corpus += phrase_data
+    count = 0
     for tree in con:
-        con_phrase_data = []
-        for node in tree:
-            if hasattr(node, 'label'):
-                con_phrase_data.append([node.get_words(),labels[node.label]])
-      #corpus.append({"sentence": tree.get_words(), "label": 1, "phrases":phrase_data })
-    for tree in neutral:
-        neutral_phrase_data = []
+        phrase_data = []
         for node in tree:
            if hasattr(node, 'label'):
-               neutral_phrase_data.append([node.get_words(),labels[node.label]])
-      #corpus.append({"sentence": tree.get_words(), "label": 2, "phrases":phrase_data })
-    print()
-    corpus = lib_phrase_data + con_phrase_data + neutral_phrase_data
-
+               phrase_data.append([node.get_words(),labels[node.label]])
+      #corpus.append({"sentence": tree.get_words(), "label": 1, "phrases":phrase_data })
+        if count == 0:
+            print(phrase_data)
+            count += 1
+        corpus += phrase_data
+    for tree in neutral:
+        phrase_data = []
+        for node in tree:
+           if hasattr(node, 'label'):
+               phrase_data.append([node.get_words(),labels[node.label]])
+        corpus += phrase_data
+        #corpus.append({"sentence": tree.get_words(), "label": 2, "phrases":phrase_data })
 
     print(len(corpus))
     print(corpus[:3])
