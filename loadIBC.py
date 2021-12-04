@@ -73,21 +73,22 @@ def separate_labels(data):
     for elt in data:
         if len(elt[0]) > max_len:
             max_len = len(elt[0])
-        phrase.append(elt[0])
+        phrase.append(elt[0].split())
         labels.append(elt[1])
 
     print(max_len)
 
     return phrase, labels
 
-def pad_corpus(sentences):
-	padded_sentences = []
-	for line in sentences:
-		padded = line[:WINDOW_SIZE]
-		padded += [STOP_TOKEN] + [PAD_TOKEN] * (WINDOW_SIZE - len(padded)-1)
-		padded_sentences.append(padded)
 
-	return padded_sentences
+def pad_corpus(sentences):
+    padded_sentences = []
+    for line in sentences:
+        padded = line[:WINDOW_SIZE]
+        padded += [STOP_TOKEN] + [PAD_TOKEN] * (WINDOW_SIZE - len(padded)-1)
+        padded_sentences.append(padded)
+    return padded_sentences
+
 		
 
 def build_vocab(sentences):
@@ -132,6 +133,7 @@ def get_data(input_file):
     corpus, lib_sentences, con_sentences, neutral_sentences = extract_corpus(lib, con, neutral)
     total_data, train_data, test_data = create_splits(lib, con, neutral)
 
+    
     train_data_phrases, train_data_labels = separate_labels(train_data)
     test_data_phrases, test_data_labels = separate_labels(test_data)
 

@@ -21,7 +21,7 @@ class leafObj:
         self.parent = par
 
     def print_leaf(self):
-        print self.word, ': ', self.pos
+        print(self.word, ': ', self.pos)
 
     def set_label(self, label):
         self.label = label
