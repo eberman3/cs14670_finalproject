@@ -1,7 +1,14 @@
+from os import sep
 import pickle
 import math
 import random
+import numpy as np
 
+PAD_TOKEN = "*PAD*"
+STOP_TOKEN = "*STOP*"
+START_TOKEN = "*START*"
+UNK_TOKEN = "*UNK*"
+WINDOW_SIZE = 14
 
 def extract_corpus(lib, con, neutral):
     corpus = []
@@ -48,12 +55,7 @@ def create_splits(lib, con, neutral, train_test_split=.9):
         for node in tree:
            if hasattr(node, 'label'):
                phrase_data.append([node.get_words(),labels[node.label]])
-        corpus += phrase_data
-        #corpus.append({"sentence": tree.get_words(), "label": 2, "phrases":phrase_data })
-
-    print(len(corpus))
-    print(corpus[:3])
-    
+        corpus += phrase_data    
 
     cutoff = int(math.floor(train_test_split * len(corpus)))
 
@@ -64,11 +66,44 @@ def create_splits(lib, con, neutral, train_test_split=.9):
     test_data = corpus[cutoff:]
     return corpus, train_data, test_data
 
+def separate_labels(data):
+    phrase = []
+    labels = []
+    max_len = 0
+    for elt in data:
+        if len(elt[0]) > max_len:
+            max_len = len(elt[0])
+        phrase.append(elt[0])
+        labels.append(elt[1])
 
-if __name__ == '__main__':
-    [lib, con, neutral] = pickle.load(open('ibcData.pkl', 'rb'))
+    print(max_len)
+
+    return phrase, labels
+
+def pad_corpus(sentences):
+	padded_sentences = []
+	for line in sentences:
+		padded = line[:WINDOW_SIZE]
+		padded += [STOP_TOKEN] + [PAD_TOKEN] * (WINDOW_SIZE - len(padded)-1)
+		padded_sentences.append(padded)
+
+	return padded_sentences
+
+def build_vocab(sentences):
+	tokens = []
+	for s in sentences: tokens.extend(s)
+	all_words = sorted(list(set([STOP_TOKEN,PAD_TOKEN,UNK_TOKEN] + tokens)))
+	vocab =  {word:i for i,word in enumerate(all_words)}
+	return vocab,vocab[PAD_TOKEN]
+
+def convert_to_id(vocab, sentences):
+	return np.stack([[vocab[word] if word in vocab else vocab[UNK_TOKEN] for word in sentence] for sentence in sentences])
+
+def get_data(input_file):
+    [lib, con, neutral] = pickle.load(open(input_file, 'rb'))
 
     # how to access sentence text
+
     print('Liberal examples (out of ', len(lib), ' sentences): ')
     for tree in lib[0:5]:
         print(tree.get_words())
@@ -93,6 +128,18 @@ if __name__ == '__main__':
         if hasattr(node, 'label'):
             print(node.label, ': ', node.get_words())
 
-
     corpus, lib_sentences, con_sentences, neutral_sentences = extract_corpus(lib, con, neutral)
     total_data, train_data, test_data = create_splits(lib, con, neutral)
+
+    train_data_phrases, train_data_labels = separate_labels(train_data)
+    test_data_phrases, test_data_labels = separate_labels(test_data)
+
+    #train_data_phrases = pad_corpus(train_data_phrases)
+    #test_data_phrases = pad_corpus(train_data_phrases)
+    
+    #vocab, padding_index = build_vocab(train_data_phrases)
+    
+    #train_data_phrases = convert_to_id(vocab, train_data_phrases)
+    #test_data_phrases = convert_to_id(vocab, test_data_phrases)
+    
+    return train_data_phrases, test_data_phrases, train_data_labels, test_data_labels
