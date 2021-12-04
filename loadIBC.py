@@ -88,6 +88,7 @@ def pad_corpus(sentences):
 		padded_sentences.append(padded)
 
 	return padded_sentences
+		
 
 def build_vocab(sentences):
 	tokens = []
@@ -134,12 +135,12 @@ def get_data(input_file):
     train_data_phrases, train_data_labels = separate_labels(train_data)
     test_data_phrases, test_data_labels = separate_labels(test_data)
 
-    #train_data_phrases = pad_corpus(train_data_phrases)
-    #test_data_phrases = pad_corpus(train_data_phrases)
+    train_data_phrases = pad_corpus(train_data_phrases)
+    test_data_phrases = pad_corpus(train_data_phrases)
     
-    #vocab, padding_index = build_vocab(train_data_phrases)
+    vocab, padding_index = build_vocab(train_data_phrases)
     
-    #train_data_phrases = convert_to_id(vocab, train_data_phrases)
-    #test_data_phrases = convert_to_id(vocab, test_data_phrases)
+    train_data_phrases = convert_to_id(vocab, train_data_phrases)
+    test_data_phrases = convert_to_id(vocab, test_data_phrases)
     
-    return train_data_phrases, test_data_phrases, train_data_labels, test_data_labels
+    return train_data_phrases, test_data_phrases, train_data_labels, test_data_labels, vocab, padding_index
