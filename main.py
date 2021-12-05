@@ -1,6 +1,8 @@
 from loadIBC import get_data
+from model import MLP, train, test
 
-WINDOW_SIZE = 14
+WINDOW_SIZE = 12
+
 
 def main():
 
@@ -13,6 +15,16 @@ def main():
 	#train(model, train_french, train_english, eng_padding_index)
 
 	#test(model, test_french, test_english, eng_padding_index)
+
+	print("Now training...")
+	my_MLP = MLP(len(vocab), WINDOW_SIZE)
+	train(my_MLP, train_data_phrases, train_data_labels)
+	print("Training complete.")
+
+	print("Now testing...")
+	print("Final accuracy: " + str(test(my_MLP, test_data_phrases, train_data_labels)))
+
+
 
 	pass
 

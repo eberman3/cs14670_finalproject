@@ -28,7 +28,7 @@ def extract_corpus(lib, con, neutral):
 
     return corpus, lib_sentences, con_sentences, neutral_sentences
 
-def create_splits(lib, con, neutral, train_test_split=.9):
+def create_splits(lib, con, neutral, train_test_split=.8):
     corpus = []
     labels = {"Liberal":0, "Conservative":1, "Neutral":2}
     for tree in lib:
@@ -46,9 +46,9 @@ def create_splits(lib, con, neutral, train_test_split=.9):
            if hasattr(node, 'label'):
                phrase_data.append([node.get_words(),labels[node.label]])
       #corpus.append({"sentence": tree.get_words(), "label": 1, "phrases":phrase_data })
-        if count == 0:
-            print(phrase_data)
-            count += 1
+        # if count == 0:
+        #     print(phrase_data)
+        #     count += 1
         corpus += phrase_data
     for tree in neutral:
         phrase_data = []
@@ -72,7 +72,7 @@ def separate_labels(data):
     max_len = 0
     for elt in data:
         if len(elt[0]) > max_len:
-            max_len = len(elt[0])
+            max_len = len(elt[0].lower().split())
         phrase.append(elt[0].split())
         labels.append(elt[1])
 
@@ -99,6 +99,10 @@ def build_vocab(sentences):
 
 def convert_to_id(vocab, sentences):
     return np.stack([[vocab[word] if word in vocab else vocab[UNK_TOKEN] for word in sentence] for sentence in sentences])
+
+def batch(inputs, batch_size, batch_num, dataset_size):
+    final_size = min(batch_size, dataset_size - (batch_num * batch_size))
+    return np.asarray(inputs[batch_num * batch_size:batch_num * batch_size + final_size]).astype(int)
 
 def get_data(input_file):
     [lib, con, neutral] = pickle.load(open(input_file, 'rb'))
@@ -135,7 +139,7 @@ def get_data(input_file):
 
     '''
 
-    corpus, lib_sentences, con_sentences, neutral_sentences = extract_corpus(lib, con, neutral)
+    #corpus, lib_sentences, con_sentences, neutral_sentences = extract_corpus(lib, con, neutral)
     total_data, train_data, test_data = create_splits(lib, con, neutral)
 
     train_data_phrases, train_data_labels = separate_labels(train_data)
@@ -143,10 +147,11 @@ def get_data(input_file):
 
     train_data_phrases = pad_corpus(train_data_phrases)
     test_data_phrases = pad_corpus(train_data_phrases)
-
     
     vocab, padding_index = build_vocab(train_data_phrases)
     train_data_phrases = convert_to_id(vocab, train_data_phrases)
     test_data_phrases = convert_to_id(vocab, test_data_phrases)
+
+    print(np.shape(train_data_phrases))
     
     return train_data_phrases, test_data_phrases, train_data_labels, test_data_labels, vocab, padding_index
