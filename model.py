@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.keras import Model, Sequential
 from tensorflow.keras.layers import Dense
+from matplotlib import pyplot as plt
 from loadIBC import batch
 
 
@@ -19,19 +20,20 @@ class MLP(tf.keras.Model):
 
         self.vocab_size = vocab_size
         self.window_size = window_size
-        self.embedding_size = 128 #TODO
+        self.embedding_size = 512 #TODO
         self.batch_size = 100 #TODO 
 
         self.E = tf.Variable(tf.random.normal([self.vocab_size, self.embedding_size], stddev=.1))
 
         self.model = Sequential(name='model')
 
+        self.model.add(Dense(units=512, activation='relu'))
         self.model.add(Dense(units=256, activation='relu'))
         self.model.add(Dense(units=128, activation='relu'))
         self.model.add(Dense(units=64, activation='relu'))
         self.model.add(Dense(units=3, activation='softmax'))
 
-        self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
 
     def call(self, inputs):
         """
@@ -46,14 +48,21 @@ class MLP(tf.keras.Model):
         """
 
         #TODO: Fill in 
+        #print(inputs[0:5])
+        sentence_matrix = []
+        for row in inputs:
+            embedded_row = tf.nn.embedding_lookup(self.E, row)
+            embedded_row = tf.reduce_mean(embedded_row, axis=0)
+            sentence_matrix.append(embedded_row)
+        sentence_matrix = np.asarray(sentence_matrix).astype(int)
+        print(np.shape(sentence_matrix))
+        # embedding = tf.nn.embedding_lookup(self.E, inputs)
+        # embedding = tf.reshape(embedding, (-1, self.window_size + 1, self.embedding_size))
 
-        embedding = tf.nn.embedding_lookup(self.E, inputs)
-        embedding = tf.reshape(embedding, (-1, self.window_size + 1, self.embedding_size))
-
-        embedding = tf.reduce_mean(embedding, axis=1)
+        #embedding = tf.reduce_mean(embedding, axis=1)
         #print(np.shape(embedding))
 
-        return self.model(embedding)
+        return self.model(sentence_matrix)
 
     def loss(self, probs, labels):
         """
@@ -85,17 +94,31 @@ def train(model, train_inputs, train_labels):
     # labels = tf.reshape(train_labels[0:end_index], (end_index // model.window_size, model.window_size))
     
     num_batches = len(train_inputs) // model.batch_size
+    losses = []
 
-    for batch_num in range(num_batches):
-        curr_batch = batch(train_inputs, model.batch_size, batch_num, len(train_inputs))
-        curr_batch_labels = batch(train_labels, model.batch_size, batch_num, len(train_inputs))
+    inputs = train_inputs
+    labels = train_labels
+    for num_epoch in range(1):
+        print("Num epoch: " + str(num_epoch))
+        for batch_num in range(num_batches):
+            curr_batch = batch(inputs, model.batch_size, batch_num, len(inputs))
+            curr_batch_labels = batch(labels, model.batch_size, batch_num, len(inputs))
 
-        with tf.GradientTape() as tape:
-            probs = model.call(curr_batch)
-            loss = model.loss(probs, curr_batch_labels)
+            with tf.GradientTape() as tape:
+                probs = model.call(curr_batch)
+                loss = model.loss(probs, curr_batch_labels)
+            losses.append(loss)
 
-        gradients = tape.gradient(loss, model.trainable_variables)
-        model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+            gradients = tape.gradient(loss, model.trainable_variables)
+            model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+        
+        # indices = np.arange(len(inputs))
+        # indices = tf.random.shuffle(indices)
+
+        # inputs = tf.gather(inputs, indices)
+        # labels = tf.gather(labels, indices)
+    
+    visualize_loss(losses)
 
 
 def test(model, test_inputs, test_labels):
@@ -132,6 +155,27 @@ def test(model, test_inputs, test_labels):
         #total_loss += model.loss(probs, curr_batch_labels)
 
     return total_accuracy / num_batches
+
+def visualize_loss(losses):
+    """
+    Uses Matplotlib to visualize loss per batch. Call this in train().
+    When you observe the plot that's displayed, think about:
+    1. What does the plot demonstrate or show?
+    2. How long does your model need to train to reach roughly its best accuracy so far, 
+    and how do you know that?
+    Optionally, add your answers to README!
+    param losses: an array of loss value from each batch of train
+
+    NOTE: DO NOT EDIT
+    
+    :return: doesn't return anything, a plot should pop-up
+    """
+    x = np.arange(1, len(losses)+1)
+    plt.xlabel('i\'th Batch')
+    plt.ylabel('Loss Value')
+    plt.title('Loss per Batch')
+    plt.plot(x, losses)
+    plt.show()
 
 
 # def generate_sentence(word1, length, vocab, model, sample_n=10):

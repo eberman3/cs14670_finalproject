@@ -8,7 +8,7 @@ PAD_TOKEN = "*PAD*"
 STOP_TOKEN = "*STOP*"
 START_TOKEN = "*START*"
 UNK_TOKEN = "*UNK*"
-WINDOW_SIZE = 12
+#WINDOW_SIZE = 12
 
 def extract_corpus(lib, con, neutral):
     corpus = []
@@ -36,8 +36,6 @@ def create_splits(lib, con, neutral, train_test_split=.8):
        for node in tree:
            if hasattr(node, 'label'):
                phrase_data.append([node.get_words(),labels[node.label]])
-       #print(phrase_data)
-       #corpus.append({"sentence": tree.get_words(), "label": 0, "phrases":phrase_data })
        corpus += phrase_data
     count = 0
     for tree in con:
@@ -45,10 +43,6 @@ def create_splits(lib, con, neutral, train_test_split=.8):
         for node in tree:
            if hasattr(node, 'label'):
                phrase_data.append([node.get_words(),labels[node.label]])
-      #corpus.append({"sentence": tree.get_words(), "label": 1, "phrases":phrase_data })
-        # if count == 0:
-        #     print(phrase_data)
-        #     count += 1
         corpus += phrase_data
     for tree in neutral:
         phrase_data = []
@@ -71,21 +65,22 @@ def separate_labels(data):
     labels = []
     max_len = 0
     for elt in data:
-        if len(elt[0]) > max_len:
+        if len(elt[0].split()) > max_len:
             max_len = len(elt[0].lower().split())
-        phrase.append(elt[0].split())
+        phrase.append(elt[0].lower().split())
         labels.append(elt[1])
 
     print(max_len)
 
-    return phrase, labels
+    return phrase, labels, max_len
 
-def pad_corpus(sentences):
+def pad_corpus(sentences, window_size):
+    print("Window size: " + str(window_size))
     padded_sentences = []
     for line in sentences:
-        padded = line[:WINDOW_SIZE]
+        padded = line[:window_size]
         padded += [STOP_TOKEN]
-        while len(padded) < WINDOW_SIZE + 1:
+        while len(padded) < window_size + 1:
             padded += [PAD_TOKEN]
         padded_sentences.append(padded)
     return padded_sentences
@@ -98,11 +93,16 @@ def build_vocab(sentences):
 	return vocab,vocab[PAD_TOKEN]
 
 def convert_to_id(vocab, sentences):
-    return np.stack([[vocab[word] if word in vocab else vocab[UNK_TOKEN] for word in sentence] for sentence in sentences])
+    ids = []
+    for sentence in sentences:
+        id = [vocab[word] if word in vocab else vocab[UNK_TOKEN] for word in sentence]
+        ids.append(id)
+    #return np.stack([[vocab[word] if word in vocab else vocab[UNK_TOKEN] for word in sentence] for sentence in sentences])
+    return ids
 
 def batch(inputs, batch_size, batch_num, dataset_size):
     final_size = min(batch_size, dataset_size - (batch_num * batch_size))
-    return np.asarray(inputs[batch_num * batch_size:batch_num * batch_size + final_size]).astype(int)
+    return inputs[batch_num * batch_size:batch_num * batch_size + final_size]
 
 def get_data(input_file):
     [lib, con, neutral] = pickle.load(open(input_file, 'rb'))
@@ -142,16 +142,18 @@ def get_data(input_file):
     #corpus, lib_sentences, con_sentences, neutral_sentences = extract_corpus(lib, con, neutral)
     total_data, train_data, test_data = create_splits(lib, con, neutral)
 
-    train_data_phrases, train_data_labels = separate_labels(train_data)
-    test_data_phrases, test_data_labels = separate_labels(test_data)
+    train_data_phrases, train_data_labels, train_max = separate_labels(train_data)
+    test_data_phrases, test_data_labels, test_max = separate_labels(test_data)
 
-    train_data_phrases = pad_corpus(train_data_phrases)
-    test_data_phrases = pad_corpus(train_data_phrases)
+    window_size = max(train_max, test_max)
+
+    # train_data_phrases = pad_corpus(train_data_phrases, window_size)
+    # test_data_phrases = pad_corpus(train_data_phrases, window_size)
     
     vocab, padding_index = build_vocab(train_data_phrases)
     train_data_phrases = convert_to_id(vocab, train_data_phrases)
     test_data_phrases = convert_to_id(vocab, test_data_phrases)
 
-    print(np.shape(train_data_phrases))
+    #print(np.shape(train_data_phrases))
     
-    return train_data_phrases, test_data_phrases, train_data_labels, test_data_labels, vocab, padding_index
+    return train_data_phrases, test_data_phrases, train_data_labels, test_data_labels, vocab, window_size
