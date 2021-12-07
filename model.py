@@ -55,7 +55,7 @@ class MLP(tf.keras.Model):
             embedded_row = tf.reduce_mean(embedded_row, axis=0)
             sentence_matrix.append(embedded_row)
         sentence_matrix = np.asarray(sentence_matrix).astype(int)
-        print(np.shape(sentence_matrix))
+        #print(np.shape(sentence_matrix))
         # embedding = tf.nn.embedding_lookup(self.E, inputs)
         # embedding = tf.reshape(embedding, (-1, self.window_size + 1, self.embedding_size))
 
@@ -98,7 +98,7 @@ def train(model, train_inputs, train_labels):
 
     inputs = train_inputs
     labels = train_labels
-    for num_epoch in range(1):
+    for num_epoch in range(5):
         print("Num epoch: " + str(num_epoch))
         for batch_num in range(num_batches):
             curr_batch = batch(inputs, model.batch_size, batch_num, len(inputs))

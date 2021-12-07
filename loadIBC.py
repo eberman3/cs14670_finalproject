@@ -2,7 +2,9 @@ from os import sep
 import pickle
 import math
 import random
+import matplotlib
 import numpy as np
+from matplotlib import pyplot as plt
 
 PAD_TOKEN = "*PAD*"
 STOP_TOKEN = "*STOP*"
@@ -58,17 +60,26 @@ def create_splits(lib, con, neutral, train_test_split=.8):
     random.shuffle(corpus)
     train_data = corpus[:cutoff]
     test_data = corpus[cutoff:]
+
+    lst = []
+    for sentence in train_data:
+        lst.append(len(sentence[0].split()))
+    #plt.hist(lst, 86)
+    #plt.show()
+
     return corpus, train_data, test_data
 
 def separate_labels(data):
     phrase = []
     labels = []
+    lengths = []
     max_len = 0
     for elt in data:
         if len(elt[0].split()) > max_len:
             max_len = len(elt[0].lower().split())
         phrase.append(elt[0].lower().split())
         labels.append(elt[1])
+        lengths.append(elt[0].lower().split())
 
     print(max_len)
 
@@ -103,6 +114,27 @@ def convert_to_id(vocab, sentences):
 def batch(inputs, batch_size, batch_num, dataset_size):
     final_size = min(batch_size, dataset_size - (batch_num * batch_size))
     return inputs[batch_num * batch_size:batch_num * batch_size + final_size]
+
+def visualize_lens(lens):
+    """
+    Uses Matplotlib to visualize loss per batch. Call this in train().
+    When you observe the plot that's displayed, think about:
+    1. What does the plot demonstrate or show?
+    2. How long does your model need to train to reach roughly its best accuracy so far, 
+    and how do you know that?
+    Optionally, add your answers to README!
+    param losses: an array of loss value from each batch of train
+
+    NOTE: DO NOT EDIT
+    
+    :return: doesn't return anything, a plot should pop-up
+    """
+    x = np.arange(1, len(losses)+1)
+    plt.xlabel('i\'th Batch')
+    plt.ylabel('Loss Value')
+    plt.title('Loss per Batch')
+    plt.plot(x, losses)
+    plt.show()
 
 def get_data(input_file):
     [lib, con, neutral] = pickle.load(open(input_file, 'rb'))
