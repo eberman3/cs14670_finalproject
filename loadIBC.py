@@ -6,31 +6,19 @@ import matplotlib
 import numpy as np
 from matplotlib import pyplot as plt
 
-PAD_TOKEN = "*PAD*"
-STOP_TOKEN = "*STOP*"
-START_TOKEN = "*START*"
 UNK_TOKEN = "*UNK*"
-#WINDOW_SIZE = 12
-
-def extract_corpus(lib, con, neutral):
-    corpus = []
-    lib_sentences = []
-    con_sentences = []
-    neutral_sentences = []
-
-    for tree in lib:
-        corpus.append(tree.get_words())
-        lib_sentences.append(tree.get_words())
-    for tree in con:
-        corpus.append(tree.get_words())
-        con_sentences.append(tree.get_words())
-    for tree in neutral:
-        corpus.append(tree.get_words())
-        neutral_sentences.append(tree.get_words())
-
-    return corpus, lib_sentences, con_sentences, neutral_sentences
 
 def create_splits(lib, con, neutral, train_test_split=.8):
+    '''
+
+    Creates the total corpus, test data, and train data splits.
+
+    :param lib: list containing liberal sentences
+    :param con: list containung conservative sentences
+    :param neutral: list containung neutral sentences
+    :param train_test_split: percent of corpus to be used as training data
+    :return: total corpus, train data, test data (in phrase format)
+    '''
     corpus = []
     labels = {"Liberal":0, "Conservative":1, "Neutral":2}
     for tree in lib:
@@ -61,132 +49,119 @@ def create_splits(lib, con, neutral, train_test_split=.8):
     train_data = corpus[:cutoff]
     test_data = corpus[cutoff:]
 
-    lst = []
-    for sentence in train_data:
-        lst.append(len(sentence[0].split()))
-    #plt.hist(lst, 86)
-    #plt.show()
-
     return corpus, train_data, test_data
 
 def separate_labels(data):
+    '''
+    Splits character phrases into list of words and labels.
+
+    :param data: list of elements of shape (data_size, 2) where first row is phrase and second row is label
+    :return phrase: list of phrases with each row in form of list of words
+    :return labels: list of labels
+    '''
+
     phrase = []
     labels = []
-    lengths = []
-    max_len = 0
+
     for elt in data:
-        if len(elt[0].split()) > max_len:
-            max_len = len(elt[0].lower().split())
         phrase.append(elt[0].lower().split())
         labels.append(elt[1])
-        lengths.append(elt[0].lower().split())
 
-    print(max_len)
-
-    return phrase, labels, max_len
-
-def pad_corpus(sentences, window_size):
-    print("Window size: " + str(window_size))
-    padded_sentences = []
-    for line in sentences:
-        padded = line[:window_size]
-        padded += [STOP_TOKEN]
-        while len(padded) < window_size + 1:
-            padded += [PAD_TOKEN]
-        padded_sentences.append(padded)
-    return padded_sentences
+    return phrase, labels
 
 def build_vocab(sentences):
-	tokens = []
-	for s in sentences: tokens.extend(s)
-	all_words = sorted(list(set([STOP_TOKEN,PAD_TOKEN,UNK_TOKEN] + tokens)))
-	vocab =  {word:i for i,word in enumerate(all_words)}
-	return vocab,vocab[PAD_TOKEN]
+    '''
+    Builds dictionary of vocab with word as key and index as value.
+
+    :param sentences: list of sentences
+    :return vocab: dict of vocab
+    '''
+    tokens = []
+    for s in sentences: tokens.extend(s)
+    all_words = sorted(list(set([UNK_TOKEN] + tokens)))
+    vocab =  {word:i for i,word in enumerate(all_words)}
+    return vocab
 
 def convert_to_id(vocab, sentences):
+    '''
+    Converts sentences into corresponding ids from vocab.
+
+    :param vocab: dict mapping word -> index
+    :param sentneces: list of sentences
+    :return ids: list of sentences in id (numerical) format
+    '''
     ids = []
     for sentence in sentences:
         id = [vocab[word] if word in vocab else vocab[UNK_TOKEN] for word in sentence]
         ids.append(id)
-    #return np.stack([[vocab[word] if word in vocab else vocab[UNK_TOKEN] for word in sentence] for sentence in sentences])
     return ids
 
 def batch(inputs, batch_size, batch_num, dataset_size):
+    '''
+    Batches input data according to batch_size.
+
+    :param inputs: input data
+    :param batch_size: batch size
+    :param batch_num: batch number
+    :param dataset_size: size of input data
+    :return: batched inputs of size (batch_size, :)
+
+    '''
     final_size = min(batch_size, dataset_size - (batch_num * batch_size))
     return inputs[batch_num * batch_size:batch_num * batch_size + final_size]
 
-def visualize_lens(lens):
-    """
-    Uses Matplotlib to visualize loss per batch. Call this in train().
-    When you observe the plot that's displayed, think about:
-    1. What does the plot demonstrate or show?
-    2. How long does your model need to train to reach roughly its best accuracy so far, 
-    and how do you know that?
-    Optionally, add your answers to README!
-    param losses: an array of loss value from each batch of train
+def get_data(train_data, test_data, train_labels, test_labels):
+    '''
+    Preprocesses the input data.
 
-    NOTE: DO NOT EDIT
-    
-    :return: doesn't return anything, a plot should pop-up
-    """
-    x = np.arange(1, len(losses)+1)
-    plt.xlabel('i\'th Batch')
-    plt.ylabel('Loss Value')
-    plt.title('Loss per Batch')
-    plt.plot(x, losses)
-    plt.show()
-
-def get_data(input_file):
-    [lib, con, neutral] = pickle.load(open(input_file, 'rb'))
-
-    # how to access sentence text
-
+    :param input_file: pickled IBC file
+    :return: train data IDs, test data IDs, train labels, tesst labels, and vocabulary
     '''
 
-    print('Liberal examples (out of ', len(lib), ' sentences): ')
-    for tree in lib[0:5]:
-        print(tree.get_words())
+    # [lib, con, neutral] = pickle.load(open(input_file, 'rb'))
 
-    print('\nConservative examples (out of ', len(con), ' sentences): ')
-    for tree in con[0:5]:
-        print(tree.get_words())
+    # total_data, train_data, test_data = create_splits(lib, con, neutral)
 
-    print('\nNeutral examples (out of ', len(neutral), ' sentences): ')
-    for tree in neutral[0:5]:
-        print(tree.get_words())
+    # train_data_phrases, train_data_labels = separate_labels(train_data)
+    # test_data_phrases, test_data_labels = separate_labels(test_data)
 
-    
+    # open_file = open("train", "wb")
+    # pickle.dump(train_data_phrases, open_file)
+    # open_file.close()
 
-    # how to access phrase labels for a particular tree
-    ex_tree = lib[0]
+    # open_file = open("test", "wb")
+    # pickle.dump(test_data_phrases, open_file)
+    # open_file.close()
 
-    print('\nPhrase labels for one tree: ')
+    # open_file = open("train_labels", "wb")
+    # pickle.dump(train_data_labels, open_file)
+    # open_file.close()
 
-    # see treeUtil.py for the tree class definition
-    for node in ex_tree:
+    # open_file = open("test_labels", "wb")
+    # pickle.dump(test_data_labels, open_file)
+    # open_file.close()
 
-        # remember, only certain nodes have labels (see paper for details)
-        if hasattr(node, 'label'):
-            print(node.label, ': ', node.get_words())
+    #open four files - train data, test data, train labels, test labels
+    file_name = open(train_data, "rb")
+    train_data_phrases = pickle.load(file_name)
+    file_name.close()
 
-    '''
+    file_name = open(test_data, "rb")
+    test_data_phrases = pickle.load(file_name)
+    file_name.close()
 
-    #corpus, lib_sentences, con_sentences, neutral_sentences = extract_corpus(lib, con, neutral)
-    total_data, train_data, test_data = create_splits(lib, con, neutral)
+    file_name = open(train_labels, "rb")
+    train_data_labels = pickle.load(file_name)
+    file_name.close()
 
-    train_data_phrases, train_data_labels, train_max = separate_labels(train_data)
-    test_data_phrases, test_data_labels, test_max = separate_labels(test_data)
+    file_name = open(test_labels, "rb")
+    test_data_labels = pickle.load(file_name)
+    file_name.close()
 
-    window_size = max(train_max, test_max)
+    vocab = build_vocab(train_data_phrases)
 
-    # train_data_phrases = pad_corpus(train_data_phrases, window_size)
-    # test_data_phrases = pad_corpus(train_data_phrases, window_size)
-    
-    vocab, padding_index = build_vocab(train_data_phrases)
     train_data_phrases = convert_to_id(vocab, train_data_phrases)
     test_data_phrases = convert_to_id(vocab, test_data_phrases)
-
-    #print(np.shape(train_data_phrases))
     
-    return train_data_phrases, test_data_phrases, train_data_labels, test_data_labels, vocab, window_size
+    return train_data_phrases, test_data_phrases, train_data_labels, test_data_labels, vocab
 
