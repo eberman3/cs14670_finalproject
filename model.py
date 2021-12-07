@@ -88,8 +88,9 @@ def train(model, train_inputs, train_labels, test_inputs, test_labels):
 
     inputs = train_inputs
     labels = train_labels
-    for num_epoch in range(10):
+    for num_epoch in range(25):
         print("Num epoch: " + str(num_epoch))
+        total_loss = 0
         for batch_num in range(num_batches):
             curr_batch = batch(inputs, model.batch_size, batch_num, len(inputs))
             curr_batch_labels = batch(labels, model.batch_size, batch_num, len(inputs))
@@ -97,13 +98,16 @@ def train(model, train_inputs, train_labels, test_inputs, test_labels):
             with tf.GradientTape() as tape:
                 probs = model.call(curr_batch)
                 loss = model.loss(probs, curr_batch_labels)
-            losses.append(loss)
+                total_loss += loss
+            
             if (batch_num % 50 == 0):
                 print("Batch num " + str(batch_num) + " validation: " + str(test(model, test_inputs, test_labels)))
 
-
-            gradients = tape.gradient(loss, model.trainable_variables)#, unconnected_gradients=tf.UnconnectedGradients.ZERO)
+            gradients = tape.gradient(loss, model.trainable_variables, unconnected_gradients=tf.UnconnectedGradients.ZERO)
             model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+        
+        total_loss / num_batches
+        losses.append(total_loss)
         
         # indices = np.arange(len(inputs))
         # indices = tf.random.shuffle(indices)
