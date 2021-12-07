@@ -189,3 +189,4 @@ def get_data(input_file):
     #print(np.shape(train_data_phrases))
     
     return train_data_phrases, test_data_phrases, train_data_labels, test_data_labels, vocab, window_size
+

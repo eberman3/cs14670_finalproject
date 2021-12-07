@@ -52,15 +52,10 @@ class MLP(tf.keras.Model):
         sentence_matrix = []
         for row in inputs:
             embedded_row = tf.nn.embedding_lookup(self.E, row)
+            #print(embedded_row)
             embedded_row = tf.reduce_mean(embedded_row, axis=0)
             sentence_matrix.append(embedded_row)
-        sentence_matrix = np.asarray(sentence_matrix).astype(int)
-        #print(np.shape(sentence_matrix))
-        # embedding = tf.nn.embedding_lookup(self.E, inputs)
-        # embedding = tf.reshape(embedding, (-1, self.window_size + 1, self.embedding_size))
-
-        #embedding = tf.reduce_mean(embedding, axis=1)
-        #print(np.shape(embedding))
+        sentence_matrix = tf.Variable(sentence_matrix)
 
         return self.model(sentence_matrix)
 
@@ -88,11 +83,6 @@ def train(model, train_inputs, train_labels, test_inputs, test_labels):
     :return: None
     """
     #TODO: Fill in
-    # end_index =  len(train_inputs) - (len(train_inputs) % model.window_size)
-
-    # inputs = tf.reshape(train_inputs[0:end_index], (end_index // model.window_size, model.window_size))
-    # labels = tf.reshape(train_labels[0:end_index], (end_index // model.window_size, model.window_size))
-    
     num_batches = len(train_inputs) // model.batch_size
     losses = []
 
@@ -108,11 +98,11 @@ def train(model, train_inputs, train_labels, test_inputs, test_labels):
                 probs = model.call(curr_batch)
                 loss = model.loss(probs, curr_batch_labels)
             losses.append(loss)
-            if (batch_num % 10 == 0):
+            if (batch_num % 50 == 0):
                 print("Batch num " + str(batch_num) + " validation: " + str(test(model, test_inputs, test_labels)))
 
 
-            gradients = tape.gradient(loss, model.trainable_variables)
+            gradients = tape.gradient(loss, model.trainable_variables)#, unconnected_gradients=tf.UnconnectedGradients.ZERO)
             model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
         
         # indices = np.arange(len(inputs))
@@ -133,11 +123,6 @@ def test(model, test_inputs, test_labels):
     :param test_labels: train labels (all labels for testing) of shape (num_labels,)
     :returns: perplexity of the test set
     """
-    # indices = np.arange(len(inputs))
-    # indices = tf.random.shuffle(indices)
-
-    # inputs = tf.gather(inputs, indices)
-    # labels = tf.gather(labels, indices)
 
     num_batches = len(test_inputs) // model.batch_size
 
