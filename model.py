@@ -31,6 +31,9 @@ class MLP(tf.keras.Model):
         self.model.add(Dense(units=256, activation='relu'))
         self.model.add(Dense(units=128, activation='relu'))
         self.model.add(Dense(units=64, activation='relu'))
+        # self.model.add(Dense(units=32, activation='relu'))
+        # self.model.add(Dense(units=16, activation='relu'))
+        # self.model.add(Dense(units=8, activation='relu'))
         self.model.add(Dense(units=3, activation='softmax'))
 
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
@@ -85,12 +88,14 @@ def train(model, train_inputs, train_labels, test_inputs, test_labels):
     #TODO: Fill in
     num_batches = len(train_inputs) // model.batch_size
     losses = []
+    accuracies = []
 
     inputs = train_inputs
     labels = train_labels
-    for num_epoch in range(25):
+    for num_epoch in range(20):
         print("Num epoch: " + str(num_epoch))
         total_loss = 0
+        total_accuracy = 0
         for batch_num in range(num_batches):
             curr_batch = batch(inputs, model.batch_size, batch_num, len(inputs))
             curr_batch_labels = batch(labels, model.batch_size, batch_num, len(inputs))
@@ -99,13 +104,14 @@ def train(model, train_inputs, train_labels, test_inputs, test_labels):
                 probs = model.call(curr_batch)
                 loss = model.loss(probs, curr_batch_labels)
                 total_loss += loss
-            
-            if (batch_num % 50 == 0):
-                print("Batch num " + str(batch_num) + " validation: " + str(test(model, test_inputs, test_labels)))
 
             gradients = tape.gradient(loss, model.trainable_variables, unconnected_gradients=tf.UnconnectedGradients.ZERO)
             model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-        
+
+            if (batch_num % 100 == 0):
+                print("Batch num " + str(batch_num) + " validation: " + str(test(model, test_inputs, test_labels)))
+
+        accuracies.append(test(model, test_inputs, test_labels))
         total_loss / num_batches
         losses.append(total_loss)
         
@@ -116,6 +122,8 @@ def train(model, train_inputs, train_labels, test_inputs, test_labels):
         # labels = tf.gather(labels, indices)
     
     visualize_loss(losses)
+    visualize_accuracies(accuracies)
+
 
 
 def test(model, test_inputs, test_labels):
@@ -163,10 +171,31 @@ def visualize_loss(losses):
     :return: doesn't return anything, a plot should pop-up
     """
     x = np.arange(1, len(losses)+1)
-    plt.xlabel('i\'th Batch')
+    plt.xlabel('i\'th Epoch')
     plt.ylabel('Loss Value')
     plt.title('Loss per Batch')
     plt.plot(x, losses)
+    plt.show()
+
+def visualize_accuracies(accuracies):
+    """
+    Uses Matplotlib to visualize loss per batch. Call this in train().
+    When you observe the plot that's displayed, think about:
+    1. What does the plot demonstrate or show?
+    2. How long does your model need to train to reach roughly its best accuracy so far, 
+    and how do you know that?
+    Optionally, add your answers to README!
+    param losses: an array of loss value from each batch of train
+
+    NOTE: DO NOT EDIT
+    
+    :return: doesn't return anything, a plot should pop-up
+    """
+    x = np.arange(1, len(accuracies)+1)
+    plt.xlabel('i\'th Epoch')
+    plt.ylabel('Accuracy Value')
+    plt.title('Accuracy per Batch')
+    plt.plot(x, accuracies)
     plt.show()
 
 
