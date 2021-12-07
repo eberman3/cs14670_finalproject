@@ -16,7 +16,7 @@ def main():
 
 	print("Now training...")
 	my_MLP = MLP(len(vocab), window_size)
-	train(my_MLP, train_data_phrases, train_data_labels)
+	train(my_MLP, train_data_phrases, train_data_labels, test_data_phrases, test_data_labels)
 
 	print("Training complete.")
 

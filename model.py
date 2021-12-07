@@ -33,7 +33,7 @@ class MLP(tf.keras.Model):
         self.model.add(Dense(units=64, activation='relu'))
         self.model.add(Dense(units=3, activation='softmax'))
 
-        self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
 
     def call(self, inputs):
         """
@@ -78,7 +78,7 @@ class MLP(tf.keras.Model):
         return tf.reduce_mean(tf.keras.metrics.sparse_categorical_crossentropy(labels, probs))
 
 
-def train(model, train_inputs, train_labels):
+def train(model, train_inputs, train_labels, test_inputs, test_labels):
     """
     Runs through one epoch - all training examples.
 
@@ -108,6 +108,9 @@ def train(model, train_inputs, train_labels):
                 probs = model.call(curr_batch)
                 loss = model.loss(probs, curr_batch_labels)
             losses.append(loss)
+            if (batch_num % 10 == 0):
+                print("Batch num " + str(batch_num) + " validation: " + str(test(model, test_inputs, test_labels)))
+
 
             gradients = tape.gradient(loss, model.trainable_variables)
             model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
