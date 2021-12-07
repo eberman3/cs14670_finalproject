@@ -98,7 +98,7 @@ def train(model, train_inputs, train_labels):
 
     inputs = train_inputs
     labels = train_labels
-    for num_epoch in range(5):
+    for num_epoch in range(10):
         print("Num epoch: " + str(num_epoch))
         for batch_num in range(num_batches):
             curr_batch = batch(inputs, model.batch_size, batch_num, len(inputs))
