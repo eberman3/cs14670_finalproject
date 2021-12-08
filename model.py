@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 from tensorflow.keras import Model, Sequential
 from tensorflow.keras.layers import Dense
 from loadIBC import batch
@@ -44,7 +45,6 @@ class MLP(tf.keras.Model):
             embedded_row = tf.reduce_mean(embedded_row, axis=0)
             sentence_matrix.append(embedded_row)
         sentence_matrix = tf.Variable(sentence_matrix)
-
         return self.model(sentence_matrix)
 
     def loss(self, probs, labels):
