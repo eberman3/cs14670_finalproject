@@ -1,6 +1,5 @@
 import argparse
 import os
-import h5py
 import numpy as np
 import tensorflow as tf
 from loadIBC import UNK_TOKEN, get_data, batch
@@ -147,8 +146,8 @@ def build(model, train_inputs, train_labels):
 def main(args):
 	# Run normally: py main.py
 	# Train, test, and save weights: py main.py --save_weights
-	# Load, test weights: py main.py --load_weights FILE/PATH/TO/WEIGHTS
-	# Load, test sentnece: py main.py --load_weights FILE/PATH/TO/WEIGHTS --test_sentence 'my test sentence'
+	# Load, test weights: py main.py --load_weights model_ckpts/MLP/MLP
+	# Load, test sentnece: py main.py --load_weights model_ckpts/MLP/MLP --test_sentence 'my test sentence'
 	# Preprocess data.
 	print("Running preprocessing...")
 	train_data_phrases, test_data_phrases, train_data_labels, test_data_labels, vocab = get_data('data/train', 'data/test', 'data/train_labels', 'data/test_labels')
@@ -170,21 +169,23 @@ def main(args):
 		print("Model weights loaded.")
 
 	# test model
-	if args.test_sentence is None:
-		print("Now testing...")
-		print("Final accuracy: " + str(test(my_MLP, test_data_phrases, test_data_labels)))
-	else:
-		#else, test sentence given
-		test_phrase = [args.test_sentence.lower().split()]
-		test_ids = np.stack([[vocab[word] if word in vocab else vocab[UNK_TOKEN] for word in sentence] for sentence in test_phrase])
-		probs = my_MLP.call(test_ids).numpy()
-		print("The phrase " + args.test_sentence + " is " + str(probs[0, 0] * 100) + "% liberal, " + str(probs[0, 1] * 100), "% conservative, and " + str(probs[0, 2] * 100) + "% neutral.")
+	# if args.test_sentence is None:
+	# 	print("Now testing...")
+	# 	print("Final accuracy: " + str(test(my_MLP, test_data_phrases, test_data_labels)))
+	# else:
+	# 	#else, test sentence given
+	# 	test_phrase = [args.test_sentence.lower().split()]
+	# 	test_ids = np.stack([[vocab[word] if word in vocab else vocab[UNK_TOKEN] for word in sentence] for sentence in test_phrase])
+	# 	probs = my_MLP.call(test_ids).numpy()
+	# 	print("The phrase " + args.test_sentence + " is " + str(probs[0, 0] * 100)[0:4] + "% liberal, " + str(probs[0, 1] * 100), "% conservative, and " + str(probs[0, 2] * 100) + "% neutral.")
 
 	if args.save_weights:
 		# save weights if flag is set
 		print("Now saving model weights...")
 		save_model_weights(my_MLP)
 		print("Model weights saved.")
+	sentences = [['liberal'], ['free market'], ['women in STEM'], ['conservative']]
+	my_MLP.plot_similarities(vocab, sentences)
 
 if __name__ == '__main__':
 	args = parseArguments()

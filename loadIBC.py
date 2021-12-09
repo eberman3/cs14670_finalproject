@@ -4,7 +4,6 @@ import math
 import random
 import matplotlib
 import numpy as np
-from matplotlib import pyplot as plt
 
 UNK_TOKEN = "*UNK*"
 
