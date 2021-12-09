@@ -61,6 +61,13 @@ class MLP(tf.keras.Model):
         return tf.reduce_mean(tf.keras.metrics.sparse_categorical_crossentropy(labels, probs))
 
     def plot_similarities(self, vocab, sentences):
+        '''
+        Plots sentence similarities
+
+        :param vocab: word to id dictionary
+        :param sentences: a list of phrases to be compared
+        :return: None
+        '''
         print("Now plotting...")
 
         ids = []
@@ -68,7 +75,6 @@ class MLP(tf.keras.Model):
             split = sentence[0].lower().split()
             id = [vocab[word] if word in vocab else vocab[UNK_TOKEN] for word in split]
             ids.append(id)
-
         vectors = []
         for row in ids:
             vectors.append(tf.reduce_mean(tf.nn.embedding_lookup(self.E, row).numpy(), axis=0))
